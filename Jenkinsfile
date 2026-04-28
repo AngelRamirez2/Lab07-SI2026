@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         NEXUS_URL = "http://localhost:8083"
-        CREDENTIALS_ID = "nexus-credentials"
+        CREDENTIALS_ID = "nexus-docker-publisher"
         IMAGE_NAME = "sumador"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         NEXUS_HOST = "localhost:8083"
@@ -44,11 +44,12 @@ pipeline {
         stage('Deploy Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: CREDENTIALS_ID, usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
-                    sh """
-                    echo "$NEXUS_PASSWORD" | docker login ${NEXUS_HOST} -u "$NEXUS_USERNAME" --password-stdin
-                    docker push ${NEXUS_IMAGE}
-                    docker logout ${NEXUS_HOST} || true
-                    """
+                    sh '''
+                    set +x
+                    printf '%s' "$NEXUS_PASSWORD" | docker login "$NEXUS_HOST" -u "$NEXUS_USERNAME" --password-stdin
+                    docker push "$NEXUS_IMAGE"
+                    docker logout "$NEXUS_HOST" || true
+                    '''
                 }
             }
         }
