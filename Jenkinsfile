@@ -6,11 +6,11 @@ pipeline {
     }
 
     environment {
-        NEXUS_URL = "http://localhost:8083"
+        NEXUS_URL = "http://nexus:8083"
         CREDENTIALS_ID = "nexus-docker-publisher"
         IMAGE_NAME = "sumador"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        NEXUS_HOST = "localhost:8083"
+        NEXUS_HOST = "nexus:8083"
         NEXUS_REPO = "repository/myrepo"
         ARTIFACT_ID = "elbuo8/webapp:${env.BUILD_NUMBER}"
         NEXUS_IMAGE = "${NEXUS_HOST}/${NEXUS_REPO}/${IMAGE_NAME}:${IMAGE_TAG}"
