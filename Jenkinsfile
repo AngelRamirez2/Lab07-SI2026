@@ -6,11 +6,11 @@ pipeline {
     }
 
     environment {
-        NEXUS_URL = "http://nexus:8083"
+        NEXUS_URL = "http://localhost:8083"
         CREDENTIALS_ID = "nexus-docker-publisher"
         IMAGE_NAME = "sumador"
         IMAGE_TAG = "${env.BUILD_NUMBER}"
-        NEXUS_HOST = "nexus:8083"
+        NEXUS_HOST = "localhost:8083"
         NEXUS_REPO = "repository/myrepo"
         ARTIFACT_ID = "elbuo8/webapp:${env.BUILD_NUMBER}"
         NEXUS_IMAGE = "${NEXUS_HOST}/${NEXUS_REPO}/${IMAGE_NAME}:${IMAGE_TAG}"
@@ -46,9 +46,18 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: CREDENTIALS_ID, usernameVariable: 'NEXUS_USERNAME', passwordVariable: 'NEXUS_PASSWORD')]) {
                     sh '''
                     set +x
-                    printf '%s' "$NEXUS_PASSWORD" | docker login "$NEXUS_HOST" -u "$NEXUS_USERNAME" --password-stdin
-                    docker push "$NEXUS_IMAGE"
-                    docker logout "$NEXUS_HOST" || true
+                    TARGET_HOST="$NEXUS_HOST"
+                    TARGET_IMAGE="$NEXUS_IMAGE"
+
+                    if ! printf '%s' "$NEXUS_PASSWORD" | docker login "$TARGET_HOST" -u "$NEXUS_USERNAME" --password-stdin; then
+                      TARGET_HOST="host.docker.internal:8083"
+                      TARGET_IMAGE="$TARGET_HOST/$NEXUS_REPO/$IMAGE_NAME:$IMAGE_TAG"
+                      docker tag "$IMAGE_NAME:$IMAGE_TAG" "$TARGET_IMAGE"
+                      printf '%s' "$NEXUS_PASSWORD" | docker login "$TARGET_HOST" -u "$NEXUS_USERNAME" --password-stdin
+                    fi
+
+                    docker push "$TARGET_IMAGE"
+                    docker logout "$TARGET_HOST" || true
                     '''
                 }
             }
